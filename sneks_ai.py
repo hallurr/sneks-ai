@@ -1,27 +1,128 @@
 import numpy as np
 import random
 
+
+# Lets now implement a simple neural network
+class NeuralNetwork:
+    def __init__(self,
+                 input_size,
+                 output_size,
+                 hidden_layers = [20, 10],
+                 activation_functions = ['relu', 'relu', 'sigmoid'],
+                 Brain = None):
+        if Brain is None:
+            self.input_size = input_size
+            self.output_size = output_size
+            self.hidden_layers = hidden_layers
+            self.activation_functions = activation_functions
+            if len(hidden_layers) != len(activation_functions)-1:
+                raise ValueError("The number layers does not match number of given activation functions")
+            self.initialize_weights_and_biases()
+        else:
+            self.input_size = Brain['input_size']
+            self.output_size = Brain['output_size']
+            self.hidden_layers = Brain['hidden_layers']
+            self.activation_functions = Brain['activation_functions']
+            self.Weights = Brain['Weights']
+            self.Biases = Brain['Biases']
+    
+    # He initialization
+    def he_initialization(self, size_A, size_B):
+        return np.random.randn(size_A, size_B)*np.sqrt(2/size_A)
+    
+    # ReLU function
+    def relu(self, x):
+        return np.maximum(0, x)
+    
+    # Sigmoid function
+    def sigmoid(self, x):
+        return 1/(1+np.exp(-x))
+    
+    # Softmax function
+    def softmax(self, x):
+        return np.exp(x)/np.sum(np.exp(x), axis = 0)
+    
+    # Initialize weights and biases
+    def initialize_weights_and_biases(self):
+        
+        # initialize weights
+        self.Weights = dict()
+        self.Weights['In'] = self.he_initialization(self.hidden_layers[0], self.input_size)
+        for i in range(1, len(self.hidden_layers)):
+            self.Weights[f'H{i-1}'] = self.he_initialization(self.hidden_layers[i], self.hidden_layers[i-1])
+        self.Weights['Out'] = self.he_initialization(self.output_size, self.hidden_layers[-1])
+        
+        # initialize biases
+        self.Biases = dict()
+        for i in range(len(self.hidden_layers)):
+            self.Biases[f'H{i}'] = np.random.randn(self.hidden_layers[i], 1)
+        self.Biases['Out'] = np.random.randn(self.output_size, 1)
+        
+    # Standard scaling
+    def standardScaling(self, X):
+        return (X - np.mean(X, axis = 0))/np.std(X, axis = 0)
+    
+    # Forward propagation
+    def forward_propagation(self, Input_vector, store_activations = False, scaling = True):
+        if scaling:
+            A = self.standardScaling(Input_vector)
+        else:
+            A = Input_vector
+            
+        if store_activations:
+            pass
+        else:
+            for i in range(len(self.hidden_layers)):
+                if i == 0:
+                    Z = np.dot(self.Weights['In'], A) + self.Biases['H0']
+                else:
+                    Z = np.dot(self.Weights[f'H{i-1}'], A) + self.Biases[f'H{i}']
+                if self.activation_functions[i] == 'relu':
+                    A = self.relu(Z)
+                elif self.activation_functions[i] == 'sigmoid':
+                    A = self.sigmoid(Z)
+                elif self.activation_functions[i] == 'softmax':
+                    A = self.softmax(Z)
+                else:
+                    raise ValueError("Activation function not recognized")
+            
+            Z = np.dot(self.Weights['Out'], A) + self.Biases['Out']
+            if self.activation_functions[-1] == 'relu':
+                A = self.relu(Z)
+            elif self.activation_functions[-1] == 'sigmoid':
+                A = self.sigmoid(Z)
+            elif self.activation_functions[-1] == 'softmax':
+                A = self.softmax(Z)
+            else:
+                raise ValueError("Activation function not recognized")
+            
+            return A
+        
+
 class Snake:
     def __init__(self, 
                  head, 
-                 body):
+                 body,
+                 brain = None):
         self.head = head
         self.body = body
         self.alive = True
         self.score = 0
         self.scoreUpdate = 0
         self.hunger = 0
+        self.brain = brain
         
-    def take_action(self, 
-                    game_state, 
-                    choices):
-        # take in the game board and output is action
-        # start with random brain (later the brain will be a neural network)
         
-        # state = game.get_state() # Later this self.canvas_size x self.canvas_size x 3 matrix will be the input to the neural network
-        possible_actions = choices
+    # take in the game board and output is action
+    def take_action(self, game_state, choices):
+           
+        if self.brain is None:# start with random brain (later the brain will be a neural network)
+            action = random.randint(0, len(choices)-1)  # Choose a random action
+        else:
+            Input_vector = game_state.flatten() # Flatten the game_state
+            action_choices = self.brain.forward_propagation(Input_vector)
+            action = np.argmax(action_choices)
         
-        action = random.randint(0, len(possible_actions)-1)  # Choose a random action
         return action
     
 class Apple:
@@ -135,8 +236,10 @@ class SnakeGame:
                     [randomhead[0]-2*randomheading[0], randomhead[1]-2*randomheading[1]]]
             # make sure the enemy snakes spawn where randomhead and body xy coordinates are [0,0,0]
             
-            while self.occupied_space[randomhead[0], randomhead[1]] == 1 or self.occupied_space[body[0][0], body[0][1]] == 1 or self.occupied_space[body[1][0], body[1][1]] == 1:
-                randomhead = [random.randint(0, self.canvas_size-1), random.randint(0, self.canvas_size-1)]
+            while self.occupied_space[randomhead[0], randomhead[1]] == 1 \
+                or self.occupied_space[body[0][0], body[0][1]] == 1 \
+                or self.occupied_space[body[1][0], body[1][1]] == 1:
+                randomhead = [random.randint(3, self.canvas_size-4), random.randint(3, self.canvas_size-4)]
                 body = [[randomhead[0]-1*randomheading[0], randomhead[1]-1*randomheading[1]],\
                     [randomhead[0]-2*randomheading[0], randomhead[1]-2*randomheading[1]]]
             

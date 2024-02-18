@@ -1,4 +1,14 @@
+<div align="center">
+
 # sneks_ai
+
+</div>
+
+<div align="center">
+
+  <img src="assets/gifs/randomsnake2.gif" alt="Gif of a game with randomly initialized simple neural networks.">
+
+</div>
 
 ## Snake AI Game
 This project implements an enhanced version of the classic Snake game, introducing AI-controlled snakes, multiple apples with decay rates, and additional game mechanics. The game is built using NumPy for numerical operations, showcasing a custom implementation of snakes that can act based on the game state, with the potential for neural network-based decision-making.
@@ -43,32 +53,57 @@ game = SnakeGame(
 )
 ```
 
-## Future Work
-+ Integrate neural networks for each snake.
-    - Neuro Evolution
-        - Competition for Mate Choice
-        - In Game Mating
-        - Coloring Based on Relatedness
-        - Mutation rate as a function of relatedness
-        - Indirect relationship between mutation and weight matrixes
-        - Network Architecture
-    - Deep Q Learning
-        - During and post game learning
-            - Reward functions already built
-    - Neural Net visualization under Snake Class
-    - Add features to gameworld:
-        - Creatures 
-            - Predator
-            - Prey
-        - Food types 
-        - Obstacles
-        - Biomes
-            - Alters likelyhood of:
-                - Foodsource
-                - Animal placement
-                - Winning headCollision
-    - Line of Sight
-        - Introduce Observation vs full Game State for Agent input
+<div align="center">
+
+  <img src="assets/gifs/randomsnake.gif" alt="Gif of a game with randomly initialized simple neural networks.">
+
+Example showing the hunger dampening the color of the snake for visual effect
+
+</div>
+
+
+
+## Progress
+
+### Brains
+- [x] Integrate neural networks for each snake.
+- [x] Neural network for each snake 
+- [ ] Neuro Evolution
+- [ ] Evolve in batches of nBatches
+- [ ] Competition for Mate Choice
+- [ ] Mutation rate as a function of related mates
+- [ ] Indirect relationship between mutation and weight matrixes
+- [ ] Genetic code
+- [ ] Network Architecture
+- [ ] Deep Q Learning
+- [ ] During and post game learning
+- [ ] Reward functions already built
+- [ ] Neural Net visualization under Snake Class
+
+
+### Features
+- [ ] In Game Mating
+- [ ] Coloring Based on Relatedness
+- Line of Sight
+    - Introduce Observation vs full Game State for Agent input
+- Creatures 
+    - Predator
+    - Prey
+- [ ] Food types
+    - [x] Apples
+- [ ] Obstacles
+
+
+#### Biomes
+- Alter likelyhood of:
+    - Foodsource (water/desert/grassland)
+    - Animal placement (shark/hen)
+    - Winning headCollision (hill)
+- [ ] Water
+- [ ] Grass
+- [ ] Desert
+- [ ] Hill 
+    
 
 ## Contributing
 Contributions to the Snake AI game are welcome. Please feel free to fork the repository, make changes, and submit pull requests.
