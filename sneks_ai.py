@@ -1,9 +1,17 @@
 import numpy as np
 import random
+import time
+import matplotlib.pyplot as plt
+from IPython.display import display, clear_output
+from sneks_ai import * # use the classes from sneks-ai.py
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
 
 # Lets now implement a simple neural network
-class NeuralNetwork:
+class ClassicNeuralNetwork:
     def __init__(self,
                  input_size,
                  output_size,
@@ -28,7 +36,7 @@ class NeuralNetwork:
     
     # He initialization
     def he_initialization(self, size_A, size_B):
-        return np.random.randn(size_A, size_B)*np.sqrt(2/size_A)
+        return torch.randn(size_A, size_B)*np.sqrt(2/size_A)
     
     # ReLU function
     def relu(self, x):
@@ -55,8 +63,8 @@ class NeuralNetwork:
         # initialize biases
         self.Biases = dict()
         for i in range(len(self.hidden_layers)):
-            self.Biases[f'H{i}'] = np.random.randn(self.hidden_layers[i], 1)
-        self.Biases['Out'] = np.random.randn(self.output_size, 1)
+            self.Biases[f'H{i}'] = torch.randn(self.hidden_layers[i], 1)
+        self.Biases['Out'] = torch.randn(self.output_size, 1)
         
     # Standard scaling
     def standardScaling(self, X):
@@ -99,6 +107,10 @@ class NeuralNetwork:
             return A
         
 
+# class SnakeCNN(nn.Module):
+#     def __init__(self):
+
+
 class Snake:
     def __init__(self, 
                  head, 
@@ -117,7 +129,7 @@ class Snake:
     def take_action(self, game_state, choices):
            
         if self.brain is None:# start with random brain (later the brain will be a neural network)
-            action = random.randint(0, len(choices)-1)  # Choose a random action
+            action = np.random.randint(0, len(choices)-1)  # Choose a random action
         else:
             Input_vector = game_state.flatten() # Flatten the game_state
             action_choices = self.brain.forward_propagation(Input_vector)
@@ -214,7 +226,7 @@ class SnakeGame:
     def reset(self):
         self.done = False
         self.ticker = 1
-        self.occupied_space = np.zeros((self.canvas_size, self.canvas_size))
+        self.occupied_space = np.zeros((self.canvas_size, self.canvas_size), dtype=np.float32)
         self.initializeSnakes()        
         self.apples = dict()
         for i in range(self.nApples):
@@ -230,8 +242,8 @@ class SnakeGame:
         self.snakes = dict()
         for i in range(self.nSnakes):
             # randomize the starting position of the enemy snakes, and their heading
-            randomheading = self.directions[random.choice(self.choices)]
-            randomhead = [random.randint(3, self.canvas_size-4), random.randint(3, self.canvas_size-4)]
+            randomheading = self.directions[np.random.choice(self.choices)]
+            randomhead = [np.random.randint(3, self.canvas_size-4), np.random.randint(3, self.canvas_size-4)]
             body = [[randomhead[0]-1*randomheading[0], randomhead[1]-1*randomheading[1]],\
                     [randomhead[0]-2*randomheading[0], randomhead[1]-2*randomheading[1]]]
             # make sure the enemy snakes spawn where randomhead and body xy coordinates are [0,0,0]
@@ -239,7 +251,7 @@ class SnakeGame:
             while self.occupied_space[randomhead[0], randomhead[1]] == 1 \
                 or self.occupied_space[body[0][0], body[0][1]] == 1 \
                 or self.occupied_space[body[1][0], body[1][1]] == 1:
-                randomhead = [random.randint(3, self.canvas_size-4), random.randint(3, self.canvas_size-4)]
+                randomhead = [np.random.randint(3, self.canvas_size-4), np.random.randint(3, self.canvas_size-4)]
                 body = [[randomhead[0]-1*randomheading[0], randomhead[1]-1*randomheading[1]],\
                     [randomhead[0]-2*randomheading[0], randomhead[1]-2*randomheading[1]]]
             
@@ -250,10 +262,10 @@ class SnakeGame:
     
     # Function to place an apple
     def place_apple(self):
-        apple_pos = [random.randint(0, self.canvas_size-1), random.randint(0, self.canvas_size-1)]
+        apple_pos = [np.random.randint(0, self.canvas_size-1), np.random.randint(0, self.canvas_size-1)]
         # check if the state of the gameboard at the apple location is 0, if not, place the apple somewhere else
         while self.occupied_space[apple_pos[0], apple_pos[1]] == 1:
-            apple_pos = [random.randint(0, self.canvas_size-1), random.randint(0, self.canvas_size-1)]
+            apple_pos = [np.random.randint(0, self.canvas_size-1), np.random.randint(0, self.canvas_size-1)]
         self.occupied_space[apple_pos[0], apple_pos[1]] = 1
         return apple_pos
         
@@ -263,8 +275,8 @@ class SnakeGame:
                     applenum, 
                     eaten):
         if eaten:
-            self.snakes[snakeID].score += (self.gamma**self.ticker)*self.apple_Reward + self.step_Reward
-            self.snakes[snakeID].scoreUpdate += (self.gamma**self.ticker)*self.apple_Reward + self.step_Reward
+            self.snakes[snakeID].score += (self.gamma**self.ticker)*self.apple_Reward
+            self.snakes[snakeID].scoreUpdate += (self.gamma**self.ticker)*self.apple_Reward
             self.snakes[snakeID].hunger = 0
             # self.score += (self.gamma**self.ticker)*self.apple_Reward + self.step_Reward
             # self.score_update = (self.gamma**self.ticker)*self.apple_Reward + self.step_Reward
@@ -272,12 +284,13 @@ class SnakeGame:
             new_apple_pos = self.place_apple()
             self.apples[applenum] = Apple(new_apple_pos, self.apple_Reward, self.gamma)
         else:
-            self.snakes[snakeID].score += self.step_Reward
-            self.snakes[snakeID].scoreUpdate += self.step_Reward
+            
             self.snakes[snakeID].hunger += 1
             # self.score += self.step_Reward
             # self.score_update = self.step_Reward
             # self.ticker += 1
+        self.snakes[snakeID].score += self.step_Reward
+        self.snakes[snakeID].scoreUpdate += self.step_Reward
         
     # Function to update the heading of the snake
     def update_heading(self, 
@@ -351,7 +364,7 @@ class SnakeGame:
         if self.snakes[snakeID].alive == False:
             return None
         
-        state = np.zeros((self.canvas_size, self.canvas_size, 3), dtype=np.uint8)
+        state = torch.zeros((self.canvas_size, self.canvas_size, 3), dtype=torch.uint8)
         
         for snakeIDS in self.snakes:
             if snakeIDS != snakeID:
